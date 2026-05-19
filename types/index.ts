@@ -9,22 +9,32 @@ export const CATEGORIES = [
   'Culture',
   'Transport',
   'Santé',
+  'Vêtements',
   'Autre',
 ] as const
 
 export type Category = typeof CATEGORIES[number]
 
 export const CATEGORY_COLORS: Record<Category, string> = {
-  Maison: '#6366f1',
+  Maison: '#5e7523',
   Vacances: '#f59e0b',
-  Courses: '#10b981',
-  Restau: '#ef4444',
-  Bar: '#8b5cf6',
+  Courses: '#96b040',
+  Restau: '#d43a3a',
+  Bar: '#b02424',
   Culture: '#06b6d4',
   Transport: '#f97316',
-  Santé: '#84cc16',
-  Autre: '#6b7280',
+  Santé: '#906b5a',
+  Vêtements: '#8b5cf6',
+  Autre: '#ac8b7c',
 }
+
+export const SPLIT_TYPES = [
+  { value: 'proportional', label: 'Proportionnel', desc: 'Selon les revenus (défaut)' },
+  { value: 'equal', label: '50 / 50', desc: 'Chacune paie la moitié' },
+  { value: 'full', label: 'Remboursement', desc: "L'autre doit la totalité" },
+] as const
+
+export type SplitType = 'proportional' | 'equal' | 'full'
 
 export interface Expense {
   id: string
@@ -34,6 +44,7 @@ export interface Expense {
   description: string
   category: Category
   paid_by: Person
+  split_type: SplitType
   labels: string[]
   created_at: string
 }
@@ -67,7 +78,6 @@ export const DEFAULT_SHARES: Record<Person, number> = {
   myriem: 0.38,
 }
 
-// Calcule les parts selon les revenus, ou utilise les parts par défaut
 export function computeShares(income: Income | null): Record<Person, number> {
   if (!income) return DEFAULT_SHARES
   const total = income.mane_income + income.myriem_income
@@ -78,16 +88,14 @@ export function computeShares(income: Income | null): Record<Person, number> {
   }
 }
 
-// Calcule le bilan pour un mois donné
 export interface MonthBalance {
   mane_paid: number
   myriem_paid: number
   total: number
-  mane_due: number   // ce que Mane devrait payer selon sa part
+  mane_due: number
   myriem_due: number
   mane_share: number
   myriem_share: number
-  // Qui doit combien à qui
   debtor: Person | null
   creditor: Person | null
   debt_amount: number
@@ -100,13 +108,33 @@ export function computeMonthBalance(
   const shares = computeShares(income)
   const mane_paid = expenses.filter(e => e.paid_by === 'mane').reduce((s, e) => s + e.amount, 0)
   const myriem_paid = expenses.filter(e => e.paid_by === 'myriem').reduce((s, e) => s + e.amount, 0)
-  const total = mane_paid + myriem_paid
-  const mane_due = total * shares.mane
-  const myriem_due = total * shares.myriem
 
-  // Mane a avancé mane_paid, devrait payer mane_due
-  // Si mane_paid > mane_due → Myriem doit de l'argent à Mane
-  const mane_balance = mane_paid - mane_due // positif = Myriem doit à Mane
+  // Calcule ce que chacune doit payer selon le type de split de chaque dépense
+  let mane_due = 0
+  let myriem_due = 0
+
+  for (const e of expenses) {
+    const split = e.split_type ?? 'proportional'
+    if (split === 'equal') {
+      mane_due += e.amount * 0.5
+      myriem_due += e.amount * 0.5
+    } else if (split === 'full') {
+      // Celle qui n'a pas payé doit tout
+      if (e.paid_by === 'mane') {
+        myriem_due += e.amount
+      } else {
+        mane_due += e.amount
+      }
+    } else {
+      // proportional
+      mane_due += e.amount * shares.mane
+      myriem_due += e.amount * shares.myriem
+    }
+  }
+
+  const total = mane_paid + myriem_paid
+  // mane_balance positif = Myriem doit à Mane
+  const mane_balance = mane_paid - mane_due
 
   let debtor: Person | null = null
   let creditor: Person | null = null

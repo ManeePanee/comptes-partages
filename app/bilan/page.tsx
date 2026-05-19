@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useApp } from '@/context/AppContext'
 import { settleMonth, unsettleMonth } from '@/lib/api'
 import { MONTH_NAMES, computeMonthBalance, computeShares } from '@/types'
+import { Button } from '@/components/ui/button'
 
 export default function BilanPage() {
   const { expenses, incomes, settlements, loading, refresh } = useApp()
@@ -18,15 +19,9 @@ export default function BilanPage() {
     return Array.from(set).sort((a, b) => b - a)
   }, [expenses, currentYear])
 
-  const months = Array.from(
-    { length: selectedYear === currentYear ? currentMonth : 12 },
-    (_, i) => i + 1
-  ).reverse()
+  const months = Array.from({ length: selectedYear === currentYear ? currentMonth : 12 }, (_, i) => i + 1).reverse()
 
-  const PERSON_COLOR: Record<string, string> = {
-    mane: 'var(--accent-mane)',
-    myriem: 'var(--accent-myriem)',
-  }
+  const PERSON_COLOR: Record<string, string> = { mane: 'var(--olive-600)', myriem: 'var(--red-500)' }
 
   const handleToggleSettle = async (year: number, month: number) => {
     const key = `${year}-${month}`
@@ -34,21 +29,14 @@ export default function BilanPage() {
     const monthExpenses = expenses.filter(e => e.year === year && e.month === month)
     const income = incomes.find(i => i.year === year && i.month === month) ?? null
     const balance = computeMonthBalance(monthExpenses, income)
-
     setSettling(key)
     try {
-      if (settlement) {
-        await unsettleMonth(year, month)
-      } else if (balance.debtor && balance.creditor) {
-        await settleMonth(year, month, balance.debt_amount, balance.debtor, balance.creditor)
-      }
+      if (settlement) await unsettleMonth(year, month)
+      else if (balance.debtor && balance.creditor) await settleMonth(year, month, balance.debt_amount, balance.debtor, balance.creditor)
       await refresh()
-    } finally {
-      setSettling(null)
-    }
+    } finally { setSettling(null) }
   }
 
-  // Total en attente de remboursement
   const pendingTotal = useMemo(() => {
     return months.reduce((total, month) => {
       const monthExpenses = expenses.filter(e => e.year === selectedYear && e.month === month)
@@ -61,53 +49,45 @@ export default function BilanPage() {
   }, [expenses, incomes, settlements, months, selectedYear])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <div className="text-sm" style={{ color: 'var(--muted)' }}>Chargement...</div>
-      </div>
-    )
+    return <div className="flex items-center justify-center h-40 text-sm text-[var(--brown-400)]">Chargement...</div>
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold">Bilan</h1>
+          <h1 className="text-xl font-bold text-[var(--brown-900)]">Bilan</h1>
           {pendingTotal > 0.01 && (
-            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
-              Total en attente : <span className="font-semibold" style={{ color: '#ef4444' }}>{pendingTotal.toFixed(2)} €</span>
+            <p className="text-sm mt-1 text-[var(--brown-500)]">
+              En attente : <span className="font-semibold text-[var(--red-500)]">{pendingTotal.toFixed(2)} €</span>
             </p>
           )}
         </div>
         <div className="flex gap-2">
           {years.map(y => (
-            <button
-              key={y}
-              onClick={() => setSelectedYear(y)}
-              className="px-3 py-1.5 rounded-lg text-sm transition-colors"
+            <button key={y} onClick={() => setSelectedYear(y)}
+              className="px-3 py-1.5 rounded-lg text-sm border transition-colors"
               style={{
-                background: selectedYear === y ? 'var(--card-hover)' : 'transparent',
-                color: selectedYear === y ? 'var(--foreground)' : 'var(--muted)',
-                border: '1px solid var(--border)',
+                background: selectedYear === y ? 'var(--olive-50)' : 'white',
+                color: selectedYear === y ? 'var(--olive-600)' : 'var(--brown-500)',
+                borderColor: selectedYear === y ? 'var(--olive-200)' : 'var(--brown-200)',
+                fontWeight: selectedYear === y ? 600 : 400,
               }}
-            >
-              {y}
-            </button>
+            >{y}</button>
           ))}
         </div>
       </div>
 
-      {/* Tableau récapitulatif */}
-      <div className="rounded-2xl overflow-hidden mb-6" style={{ border: '1px solid var(--border)' }}>
+      <div className="rounded-2xl overflow-hidden border border-[var(--brown-200)] bg-white shadow-sm mb-6">
         <table className="w-full">
           <thead>
-            <tr style={{ background: 'var(--card)', borderBottom: '1px solid var(--border)' }}>
-              <th className="text-left px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted)' }}>Mois</th>
-              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--accent-mane)' }}>Mane avancé</th>
-              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--accent-myriem)' }}>Myriem avancé</th>
-              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted)' }}>Total</th>
-              <th className="text-center px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted)' }}>Remboursement dû</th>
-              <th className="text-center px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted)' }}>Statut</th>
+            <tr className="border-b border-[var(--brown-100)] bg-[var(--brown-50)]">
+              <th className="text-left px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Mois</th>
+              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--olive-600)' }}>Mane avancé</th>
+              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--red-500)' }}>Myriem avancé</th>
+              <th className="text-right px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Total</th>
+              <th className="text-center px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Remboursement dû</th>
+              <th className="text-center px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Statut</th>
             </tr>
           </thead>
           <tbody>
@@ -118,61 +98,48 @@ export default function BilanPage() {
               const balance = computeMonthBalance(monthExpenses, income)
               const key = `${selectedYear}-${month}`
               const isSettled = !!settlement
-              const isSettling = settling === key
 
               return (
-                <tr
-                  key={month}
-                  style={{
-                    background: isSettled ? 'var(--background)' : 'var(--card)',
-                    borderBottom: '1px solid var(--border)',
-                    opacity: isSettled ? 0.7 : 1,
-                  }}
-                >
-                  <td className="px-5 py-3 text-sm font-medium">{MONTH_NAMES[month - 1]}</td>
-                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--accent-mane)' }}>
+                <tr key={month} className="border-b border-[var(--brown-100)] last:border-0"
+                  style={{ background: isSettled ? 'var(--brown-50)' : 'white', opacity: isSettled ? 0.75 : 1 }}>
+                  <td className="px-5 py-3 text-sm font-medium text-[var(--brown-900)]">{MONTH_NAMES[month - 1]}</td>
+                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--olive-600)' }}>
                     {monthExpenses.length > 0 ? `${balance.mane_paid.toFixed(2)} €` : '—'}
                   </td>
-                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--accent-myriem)' }}>
+                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--red-500)' }}>
                     {monthExpenses.length > 0 ? `${balance.myriem_paid.toFixed(2)} €` : '—'}
                   </td>
-                  <td className="px-5 py-3 text-right text-sm font-medium">
+                  <td className="px-5 py-3 text-right text-sm font-medium text-[var(--brown-900)]">
                     {monthExpenses.length > 0 ? `${balance.total.toFixed(2)} €` : '—'}
                   </td>
                   <td className="px-5 py-3 text-center text-sm">
                     {balance.debtor && balance.creditor ? (
                       <span>
-                        <span style={{ color: PERSON_COLOR[balance.debtor] }}>
-                          {balance.debtor === 'mane' ? 'Mane' : 'Myriem'}
-                        </span>
+                        <span style={{ color: PERSON_COLOR[balance.debtor] }}>{balance.debtor === 'mane' ? 'Mane' : 'Myriem'}</span>
                         {' → '}
-                        <span style={{ color: PERSON_COLOR[balance.creditor] }}>
-                          {balance.creditor === 'mane' ? 'Mane' : 'Myriem'}
-                        </span>
-                        <span className="font-semibold ml-2">{balance.debt_amount.toFixed(2)} €</span>
+                        <span style={{ color: PERSON_COLOR[balance.creditor] }}>{balance.creditor === 'mane' ? 'Mane' : 'Myriem'}</span>
+                        <span className="font-semibold text-[var(--brown-900)] ml-2">{balance.debt_amount.toFixed(2)} €</span>
                       </span>
-                    ) : (
-                      monthExpenses.length > 0 ? <span style={{ color: '#10b981' }}>Égalité</span> : '—'
-                    )}
+                    ) : monthExpenses.length > 0 ? (
+                      <span className="text-[var(--olive-600)]">Égalité</span>
+                    ) : '—'}
                   </td>
                   <td className="px-5 py-3 text-center">
                     {monthExpenses.length > 0 && balance.debtor ? (
-                      <button
+                      <Button
+                        variant="outline" size="sm"
                         onClick={() => handleToggleSettle(selectedYear, month)}
-                        disabled={!!isSettling}
-                        className="text-xs px-3 py-1.5 rounded-full font-medium transition-all"
+                        disabled={settling === key}
+                        className="text-xs rounded-full"
                         style={{
-                          background: isSettled ? '#10b98122' : '#ef444422',
-                          color: isSettled ? '#10b981' : '#ef4444',
-                          border: `1px solid ${isSettled ? '#10b98144' : '#ef444444'}`,
-                          opacity: isSettling ? 0.5 : 1,
+                          borderColor: isSettled ? 'var(--olive-200)' : 'var(--brown-200)',
+                          color: isSettled ? 'var(--olive-600)' : 'var(--brown-500)',
+                          background: isSettled ? 'var(--olive-50)' : 'white',
                         }}
                       >
-                        {isSettling ? '...' : isSettled ? '✓ Soldé' : 'En attente'}
-                      </button>
-                    ) : (
-                      <span style={{ color: 'var(--muted)' }} className="text-xs">—</span>
-                    )}
+                        {settling === key ? '...' : isSettled ? '✓ Soldé' : 'En attente'}
+                      </Button>
+                    ) : <span className="text-[var(--brown-300)] text-xs">—</span>}
                   </td>
                 </tr>
               )
@@ -184,47 +151,37 @@ export default function BilanPage() {
       {/* Récap annuel */}
       <div className="grid grid-cols-2 gap-4">
         {(['mane', 'myriem'] as const).map(person => {
-          const totalPaid = expenses
-            .filter(e => e.year === selectedYear && e.paid_by === person)
-            .reduce((s, e) => s + e.amount, 0)
+          const totalPaid = expenses.filter(e => e.year === selectedYear && e.paid_by === person).reduce((s, e) => s + e.amount, 0)
           const totalDue = months.reduce((sum, month) => {
             const monthExpenses = expenses.filter(e => e.year === selectedYear && e.month === month)
             const income = incomes.find(i => i.year === selectedYear && i.month === month) ?? null
             const balance = computeMonthBalance(monthExpenses, income)
             return sum + (person === 'mane' ? balance.mane_due : balance.myriem_due)
           }, 0)
+          const diff = totalPaid - totalDue
 
           return (
-            <div
-              key={person}
-              className="rounded-2xl p-5"
+            <div key={person} className="rounded-2xl p-5 border shadow-sm"
               style={{
-                background: person === 'mane' ? 'var(--accent-mane-bg)' : 'var(--accent-myriem-bg)',
-                border: `1px solid ${person === 'mane' ? 'var(--accent-mane)' : 'var(--accent-myriem)'}33`,
-              }}
-            >
-              <h3 className="text-sm font-medium mb-3" style={{ color: PERSON_COLOR[person] }}>
+                background: person === 'mane' ? 'var(--olive-50)' : 'var(--red-50)',
+                borderColor: person === 'mane' ? 'var(--olive-200)' : 'var(--red-200)',
+              }}>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: PERSON_COLOR[person] }}>
                 {person === 'mane' ? 'Mane' : 'Myriem'} — {selectedYear}
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span style={{ color: 'var(--muted)' }}>Total avancé</span>
-                  <span className="font-medium">{totalPaid.toFixed(2)} €</span>
+                  <span className="text-[var(--brown-500)]">Total avancé</span>
+                  <span className="font-medium text-[var(--brown-900)]">{totalPaid.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between">
-                  <span style={{ color: 'var(--muted)' }}>Total dû (parts)</span>
-                  <span className="font-medium">{totalDue.toFixed(2)} €</span>
+                  <span className="text-[var(--brown-500)]">Total dû (parts)</span>
+                  <span className="font-medium text-[var(--brown-900)]">{totalDue.toFixed(2)} €</span>
                 </div>
-                <div
-                  className="flex justify-between pt-2"
-                  style={{ borderTop: '1px solid var(--border)' }}
-                >
-                  <span style={{ color: 'var(--muted)' }}>Balance</span>
-                  <span
-                    className="font-bold"
-                    style={{ color: totalPaid - totalDue >= 0 ? '#10b981' : '#ef4444' }}
-                  >
-                    {totalPaid - totalDue >= 0 ? '+' : ''}{(totalPaid - totalDue).toFixed(2)} €
+                <div className="flex justify-between pt-2 border-t border-[var(--brown-200)]">
+                  <span className="text-[var(--brown-500)]">Balance</span>
+                  <span className="font-bold" style={{ color: diff >= 0 ? 'var(--olive-600)' : 'var(--red-500)' }}>
+                    {diff >= 0 ? '+' : ''}{diff.toFixed(2)} €
                   </span>
                 </div>
               </div>

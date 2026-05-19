@@ -1,14 +1,15 @@
 -- Dépenses communes Mane & Myriem
--- Activer RLS (Row Level Security) - pas d'auth donc on ouvre tout pour l'instant
+-- À exécuter dans Supabase > SQL Editor
 
 create table if not exists expenses (
   id uuid primary key default gen_random_uuid(),
   year int not null,
-  month int not null, -- 1-12
+  month int not null,
   amount numeric(10,2) not null,
   description text not null,
-  category text not null, -- 'Maison' | 'Vacances' | 'Courses' | 'Restau' | 'Bar' | 'Culture' | 'Transport' | 'Santé' | 'Autre'
-  paid_by text not null, -- 'mane' | 'myriem'
+  category text not null,
+  paid_by text not null,         -- 'mane' | 'myriem'
+  split_type text not null default 'proportional', -- 'proportional' | 'equal' | 'full'
   labels text[] default '{}',
   created_at timestamptz default now()
 );
@@ -28,13 +29,13 @@ create table if not exists settlements (
   year int not null,
   month int not null,
   amount numeric(10,2) not null,
-  from_person text not null, -- qui rembourse
-  to_person text not null,   -- qui reçoit
+  from_person text not null,
+  to_person text not null,
   settled_at timestamptz default now(),
   unique(year, month)
 );
 
--- Activer RLS mais avec policy publique (pas d'auth)
+-- RLS avec accès public (pas d'auth)
 alter table expenses enable row level security;
 alter table incomes enable row level security;
 alter table settlements enable row level security;
@@ -42,3 +43,6 @@ alter table settlements enable row level security;
 create policy "Public access expenses" on expenses for all using (true) with check (true);
 create policy "Public access incomes" on incomes for all using (true) with check (true);
 create policy "Public access settlements" on settlements for all using (true) with check (true);
+
+-- Migration si la table existe déjà : ajouter la colonne split_type
+-- alter table expenses add column if not exists split_type text not null default 'proportional';

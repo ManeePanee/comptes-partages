@@ -7,6 +7,7 @@ import { ExpenseRow } from './ExpenseRow'
 import { CategoryPieChart } from './CategoryPieChart'
 import { AddExpenseModal } from './AddExpenseModal'
 import { settleMonth, unsettleMonth } from '@/lib/api'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   year: number
@@ -17,6 +18,8 @@ interface Props {
   defaultOpen?: boolean
 }
 
+const PERSON_COLOR = { mane: 'var(--olive-600)', myriem: 'var(--red-500)' }
+
 export function MonthAccordion({ year, month, expenses, income, settlement, defaultOpen = false }: Props) {
   const { refresh } = useApp()
   const [open, setOpen] = useState(defaultOpen)
@@ -25,139 +28,102 @@ export function MonthAccordion({ year, month, expenses, income, settlement, defa
   const [settling, setSettling] = useState(false)
 
   const balance = computeMonthBalance(expenses, income)
-  const total = balance.total
   const isSettled = !!settlement
 
   const handleSettle = async () => {
     if (!balance.debtor || !balance.creditor) return
     setSettling(true)
     try {
-      if (isSettled) {
-        await unsettleMonth(year, month)
-      } else {
-        await settleMonth(year, month, balance.debt_amount, balance.debtor, balance.creditor)
-      }
+      if (isSettled) await unsettleMonth(year, month)
+      else await settleMonth(year, month, balance.debt_amount, balance.debtor, balance.creditor)
       await refresh()
-    } finally {
-      setSettling(false)
-    }
-  }
-
-  const PERSON_COLOR_MAP = {
-    mane: 'var(--accent-mane)',
-    myriem: 'var(--accent-myriem)',
+    } finally { setSettling(false) }
   }
 
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{ border: '1px solid var(--border)', background: isSettled ? 'var(--background)' : 'var(--card)' }}
-    >
+    <div className="rounded-2xl overflow-hidden border bg-white transition-colors"
+      style={{ borderColor: isSettled ? 'var(--brown-100)' : 'var(--brown-200)' }}>
       {/* Header */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.02] text-left"
+        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-[var(--brown-50)] transition-colors text-left"
       >
-        <span
-          className="text-sm font-medium"
-          style={{ color: isSettled ? 'var(--muted)' : 'var(--foreground)' }}
-        >
+        <span className="text-sm font-semibold text-[var(--brown-900)]">
           {MONTH_NAMES[month - 1]} {year}
         </span>
-
         {isSettled && (
-          <span
-            className="text-xs px-2 py-0.5 rounded-full"
-            style={{ background: '#10b98122', color: '#10b981' }}
-          >
+          <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--olive-50)] text-[var(--olive-600)] border border-[var(--olive-200)]">
             soldé ✓
           </span>
         )}
-
         <div className="ml-auto flex items-center gap-4">
-          {expenses.length > 0 && (
+          {expenses.length > 0 ? (
             <>
-              <span className="text-xs" style={{ color: 'var(--muted)' }}>
-                {expenses.length} dépense{expenses.length > 1 ? 's' : ''}
-              </span>
-              <span className="text-sm font-semibold">{total.toFixed(2)} €</span>
+              <span className="text-xs text-[var(--brown-400)]">{expenses.length} dépense{expenses.length > 1 ? 's' : ''}</span>
+              <span className="text-sm font-bold text-[var(--brown-900)]">{balance.total.toFixed(2)} €</span>
             </>
+          ) : (
+            <span className="text-xs text-[var(--brown-300)]">Aucune dépense</span>
           )}
-          {expenses.length === 0 && (
-            <span className="text-xs" style={{ color: 'var(--muted)' }}>Aucune dépense</span>
-          )}
-          <span
-            className="text-xs transition-transform"
-            style={{ color: 'var(--muted)', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block' }}
-          >
-            ▼
-          </span>
+          <span className="text-xs text-[var(--brown-400)] transition-transform inline-block" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
         </div>
       </button>
 
-      {/* Body */}
       {open && (
         <div className="px-5 pb-5">
-          {/* Résumé des parts */}
+          {/* Résumé */}
           {expenses.length > 0 && (
-            <div
-              className="flex items-center gap-3 mb-4 p-3 rounded-xl"
-              style={{ background: 'var(--background)' }}
-            >
-              <div className="flex-1 text-xs" style={{ color: 'var(--muted)' }}>
-                <div className="flex justify-between mb-1">
-                  <span style={{ color: 'var(--accent-mane)' }}>Mane a avancé</span>
-                  <span>{balance.mane_paid.toFixed(2)} €</span>
+            <div className="flex items-stretch gap-3 mb-4 p-4 rounded-xl bg-[var(--brown-50)] border border-[var(--brown-100)]">
+              <div className="flex-1 text-xs space-y-1.5">
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--olive-600)' }}>Mane a avancé</span>
+                  <span className="font-medium text-[var(--brown-900)]">{balance.mane_paid.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between">
-                  <span style={{ color: 'var(--accent-myriem)' }}>Myriem a avancé</span>
-                  <span>{balance.myriem_paid.toFixed(2)} €</span>
+                  <span style={{ color: 'var(--red-500)' }}>Myriem a avancé</span>
+                  <span className="font-medium text-[var(--brown-900)]">{balance.myriem_paid.toFixed(2)} €</span>
                 </div>
               </div>
-              <div className="w-px h-8" style={{ background: 'var(--border)' }} />
-              <div className="flex-1 text-xs" style={{ color: 'var(--muted)' }}>
-                <div className="flex justify-between mb-1">
-                  <span>Part Mane ({(balance.mane_share * 100).toFixed(0)}%)</span>
-                  <span>{balance.mane_due.toFixed(2)} €</span>
+
+              <div className="w-px bg-[var(--brown-200)]" />
+
+              <div className="flex-1 text-xs space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-[var(--brown-500)]">Part Mane ({(balance.mane_share * 100).toFixed(0)}%)</span>
+                  <span className="font-medium text-[var(--brown-900)]">{balance.mane_due.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Part Myriem ({(balance.myriem_share * 100).toFixed(0)}%)</span>
-                  <span>{balance.myriem_due.toFixed(2)} €</span>
+                  <span className="text-[var(--brown-500)]">Part Myriem ({(balance.myriem_share * 100).toFixed(0)}%)</span>
+                  <span className="font-medium text-[var(--brown-900)]">{balance.myriem_due.toFixed(2)} €</span>
                 </div>
               </div>
-              <div className="w-px h-8" style={{ background: 'var(--border)' }} />
-              <div className="text-xs text-right">
+
+              <div className="w-px bg-[var(--brown-200)]" />
+
+              <div className="text-xs text-right flex flex-col justify-center">
                 {balance.debtor && balance.creditor ? (
                   <>
-                    <div style={{ color: 'var(--muted)' }}>
-                      <span style={{ color: PERSON_COLOR_MAP[balance.debtor] }}>
-                        {balance.debtor === 'mane' ? 'Mane' : 'Myriem'}
-                      </span>
+                    <span className="text-[var(--brown-500)]">
+                      <span style={{ color: PERSON_COLOR[balance.debtor] }}>{balance.debtor === 'mane' ? 'Mane' : 'Myriem'}</span>
                       {' doit '}
-                    </div>
-                    <div className="font-bold text-base" style={{ color: PERSON_COLOR_MAP[balance.creditor] }}>
-                      {balance.debt_amount.toFixed(2)} €
-                    </div>
-                    <div style={{ color: 'var(--muted)' }}>
+                    </span>
+                    <span className="font-bold text-lg text-[var(--brown-900)]">{balance.debt_amount.toFixed(2)} €</span>
+                    <span className="text-[var(--brown-500)]">
                       {' à '}
-                      <span style={{ color: PERSON_COLOR_MAP[balance.creditor] }}>
-                        {balance.creditor === 'mane' ? 'Mane' : 'Myriem'}
-                      </span>
-                    </div>
+                      <span style={{ color: PERSON_COLOR[balance.creditor] }}>{balance.creditor === 'mane' ? 'Mane' : 'Myriem'}</span>
+                    </span>
                   </>
                 ) : (
-                  <span style={{ color: '#10b981' }}>Égalité ✓</span>
+                  <span className="text-[var(--olive-600)] font-medium">Égalité ✓</span>
                 )}
               </div>
             </div>
           )}
 
-          {/* Liste des dépenses */}
+          {/* Liste */}
           <div className="flex flex-col gap-1.5 mb-4">
             {expenses.length === 0 ? (
-              <p className="text-sm text-center py-4" style={{ color: 'var(--muted)' }}>
-                Aucune dépense ce mois-ci
-              </p>
+              <p className="text-sm text-center py-6 text-[var(--brown-400)]">Aucune dépense ce mois-ci</p>
             ) : (
               expenses.map(e => <ExpenseRow key={e.id} expense={e} />)
             )}
@@ -166,18 +132,11 @@ export function MonthAccordion({ year, month, expenses, income, settlement, defa
           {/* Graphique */}
           {expenses.length > 0 && (
             <div className="mb-4">
-              <button
-                onClick={() => setShowChart(c => !c)}
-                className="text-xs mb-3 transition-colors"
-                style={{ color: 'var(--muted)' }}
-              >
-                {showChart ? '▲ Masquer le graphique' : '▼ Voir le graphique par catégorie'}
+              <button onClick={() => setShowChart(c => !c)} className="text-xs text-[var(--brown-400)] hover:text-[var(--brown-600)] mb-3 transition-colors">
+                {showChart ? '▲ Masquer le graphique' : '▼ Voir par catégorie'}
               </button>
               {showChart && (
-                <div
-                  className="p-4 rounded-xl"
-                  style={{ background: 'var(--background)', border: '1px solid var(--border)' }}
-                >
+                <div className="p-4 rounded-xl bg-[var(--brown-50)] border border-[var(--brown-100)]">
                   <CategoryPieChart expenses={expenses} />
                 </div>
               )}
@@ -186,40 +145,30 @@ export function MonthAccordion({ year, month, expenses, income, settlement, defa
 
           {/* Actions */}
           <div className="flex gap-2">
-            <button
+            <Button
+              variant="outline"
               onClick={() => setShowAdd(true)}
-              className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                background: 'var(--accent-mane-bg)',
-                color: 'var(--accent-mane)',
-                border: '1px solid var(--accent-mane)33',
-              }}
+              className="flex-1 border-[var(--olive-200)] text-[var(--olive-600)] hover:bg-[var(--olive-50)]"
             >
               + Ajouter une dépense
-            </button>
-
+            </Button>
             {expenses.length > 0 && balance.debtor && (
-              <button
-                onClick={handleSettle}
-                disabled={settling}
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              <Button
+                onClick={handleSettle} disabled={settling} variant="outline"
+                className="px-4"
                 style={{
-                  background: isSettled ? '#10b98122' : '#10b98133',
-                  color: '#10b981',
-                  border: '1px solid #10b98144',
-                  opacity: settling ? 0.6 : 1,
+                  borderColor: isSettled ? 'var(--olive-200)' : 'var(--brown-200)',
+                  color: isSettled ? 'var(--olive-600)' : 'var(--brown-500)',
                 }}
               >
-                {settling ? '...' : isSettled ? '↩ Annuler solde' : '✓ Marquer soldé'}
-              </button>
+                {settling ? '...' : isSettled ? '↩ Annuler' : '✓ Soldé'}
+              </Button>
             )}
           </div>
         </div>
       )}
 
-      {showAdd && (
-        <AddExpenseModal year={year} month={month} onClose={() => setShowAdd(false)} />
-      )}
+      {showAdd && <AddExpenseModal year={year} month={month} onClose={() => setShowAdd(false)} />}
     </div>
   )
 }
