@@ -162,7 +162,8 @@ export default function BilanPage() {
               <select
                 value={chartMonth}
                 onChange={e => setChartMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                className="text-xs rounded-lg px-2 py-1.5 border border-[var(--brown-200)] bg-white text-[var(--brown-700)] outline-none"
+                className="h-8 rounded-lg border border-[var(--brown-200)] bg-white text-[var(--brown-700)] px-2.5 pr-8 text-xs outline-none appearance-none"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ac8b7c' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
               >
                 <option value="all">Tous les mois</option>
                 {months.map(m => (

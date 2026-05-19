@@ -120,12 +120,34 @@ export function MonthAccordion({ year, month, expenses, income, settlement, defa
             </div>
           )}
 
-          {/* Liste */}
-          <div className="flex flex-col gap-1.5 mb-4">
+          {/* Liste groupée par personne */}
+          <div className="flex flex-col gap-3 mb-4">
             {expenses.length === 0 ? (
               <p className="text-sm text-center py-6 text-[var(--brown-400)]">Aucune dépense ce mois-ci</p>
             ) : (
-              expenses.map(e => <ExpenseRow key={e.id} expense={e} />)
+              (['mane', 'myriem'] as const).map(person => {
+                const personExpenses = expenses.filter(e => e.paid_by === person)
+                if (personExpenses.length === 0) return null
+                const personTotal = personExpenses.reduce((s, e) => s + e.amount, 0)
+                const color = person === 'mane' ? 'var(--olive-600)' : 'var(--red-500)'
+                const bg = person === 'mane' ? 'var(--olive-50)' : 'var(--red-50)'
+                const border = person === 'mane' ? 'var(--olive-200)' : 'var(--red-200)'
+                return (
+                  <div key={person} className="rounded-xl overflow-hidden border" style={{ borderColor: border }}>
+                    <div className="flex items-center justify-between px-3 py-2" style={{ background: bg }}>
+                      <span className="text-xs font-semibold" style={{ color }}>
+                        {person === 'mane' ? '🌿 Mane' : '🌸 Myriem'}
+                      </span>
+                      <span className="text-xs font-semibold" style={{ color }}>
+                        {personTotal.toFixed(2)} €
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 p-1.5">
+                      {personExpenses.map(e => <ExpenseRow key={e.id} expense={e} />)}
+                    </div>
+                  </div>
+                )
+              })
             )}
           </div>
 
