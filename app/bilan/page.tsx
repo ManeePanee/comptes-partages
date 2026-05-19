@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react'
 import { useApp } from '@/context/AppContext'
 import { settleMonth, unsettleMonth } from '@/lib/api'
-import { MONTH_NAMES, computeMonthBalance, computeShares } from '@/types'
+import { MONTH_NAMES, computeMonthBalance, computeShares, type Person } from '@/types'
 import { Button } from '@/components/ui/button'
+import { CategoryPieChart } from '@/components/CategoryPieChart'
 
 export default function BilanPage() {
   const { expenses, incomes, settlements, loading, refresh } = useApp()
@@ -12,6 +13,8 @@ export default function BilanPage() {
   const currentMonth = new Date().getMonth() + 1
   const [selectedYear, setSelectedYear] = useState(currentYear)
   const [settling, setSettling] = useState<string | null>(null)
+  const [chartMonth, setChartMonth] = useState<number | 'all'>('all')
+  const [chartPerson, setChartPerson] = useState<Person | 'all'>('all')
 
   const years = useMemo(() => {
     const set = new Set<number>([currentYear])
@@ -147,6 +150,61 @@ export default function BilanPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Graphique par catégorie */}
+      {expenses.filter(e => e.year === selectedYear).length > 0 && (
+        <div className="rounded-2xl p-5 mb-6 bg-white border border-[var(--brown-200)] shadow-sm">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h2 className="text-sm font-semibold text-[var(--brown-900)]">Dépenses par catégorie</h2>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Dropdown mois */}
+              <select
+                value={chartMonth}
+                onChange={e => setChartMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                className="text-xs rounded-lg px-2 py-1.5 border border-[var(--brown-200)] bg-white text-[var(--brown-700)] outline-none"
+              >
+                <option value="all">Tous les mois</option>
+                {months.map(m => (
+                  <option key={m} value={m}>{MONTH_NAMES[m - 1]}</option>
+                ))}
+              </select>
+
+              {/* Segmented control personne */}
+              <div className="flex rounded-lg border border-[var(--brown-200)] overflow-hidden">
+                {(['all', 'mane', 'myriem'] as const).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setChartPerson(p)}
+                    className="text-xs px-3 py-1.5 transition-colors"
+                    style={{
+                      background: chartPerson === p
+                        ? p === 'mane' ? 'var(--olive-100)' : p === 'myriem' ? 'var(--red-50)' : 'var(--brown-100)'
+                        : 'white',
+                      color: chartPerson === p
+                        ? p === 'mane' ? 'var(--olive-700)' : p === 'myriem' ? 'var(--red-600)' : 'var(--brown-800)'
+                        : 'var(--brown-400)',
+                      fontWeight: chartPerson === p ? 600 : 400,
+                      borderRight: p !== 'myriem' ? '1px solid var(--brown-200)' : 'none',
+                    }}
+                  >
+                    {p === 'all' ? 'Toutes' : p === 'mane' ? 'Mane' : 'Myriem'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <CategoryPieChart
+            expenses={expenses.filter(e =>
+              e.year === selectedYear &&
+              (chartMonth === 'all' || e.month === chartMonth) &&
+              (chartPerson === 'all' || e.paid_by === chartPerson)
+            )}
+            showFilter={false}
+          />
+        </div>
+      )}
 
       {/* Récap annuel */}
       <div className="grid grid-cols-2 gap-4">
