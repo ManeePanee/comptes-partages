@@ -1,18 +1,7 @@
 import { supabase } from './supabase'
-import type { Expense, Income, Settlement, Category, Person } from '@/types'
+import type { Expense, Income, Settlement, SplitType, Category, Person } from '@/types'
 
 // --- EXPENSES ---
-
-export async function getExpenses(year: number, month: number): Promise<Expense[]> {
-  const { data, error } = await supabase
-    .from('expenses')
-    .select('*')
-    .eq('year', year)
-    .eq('month', month)
-    .order('created_at', { ascending: false })
-  if (error) throw error
-  return data ?? []
-}
 
 export async function getAllExpenses(): Promise<Expense[]> {
   const { data, error } = await supabase
@@ -34,6 +23,21 @@ export async function addExpense(expense: Omit<Expense, 'id' | 'created_at'>): P
   return data
 }
 
+export async function updateExpense(
+  id: string,
+  updates: {
+    description?: string
+    amount?: number
+    category?: Category
+    paid_by?: Person
+    split_type?: SplitType
+    labels?: string[]
+  }
+): Promise<void> {
+  const { error } = await supabase.from('expenses').update(updates).eq('id', id)
+  if (error) throw error
+}
+
 export async function deleteExpense(id: string): Promise<void> {
   const { error } = await supabase.from('expenses').delete().eq('id', id)
   if (error) throw error
@@ -45,17 +49,6 @@ export async function updateExpenseLabels(id: string, labels: string[]): Promise
 }
 
 // --- INCOMES ---
-
-export async function getIncome(year: number, month: number): Promise<Income | null> {
-  const { data, error } = await supabase
-    .from('incomes')
-    .select('*')
-    .eq('year', year)
-    .eq('month', month)
-    .maybeSingle()
-  if (error) throw error
-  return data
-}
 
 export async function getAllIncomes(): Promise<Income[]> {
   const { data, error } = await supabase
@@ -82,18 +75,16 @@ export async function upsertIncome(
   return data
 }
 
-// --- SETTLEMENTS ---
-
-export async function getSettlement(year: number, month: number): Promise<Settlement | null> {
-  const { data, error } = await supabase
-    .from('settlements')
-    .select('*')
+export async function deleteIncome(year: number, month: number): Promise<void> {
+  const { error } = await supabase
+    .from('incomes')
+    .delete()
     .eq('year', year)
     .eq('month', month)
-    .maybeSingle()
   if (error) throw error
-  return data
 }
+
+// --- SETTLEMENTS ---
 
 export async function getAllSettlements(): Promise<Settlement[]> {
   const { data, error } = await supabase

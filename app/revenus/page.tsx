@@ -2,11 +2,18 @@
 
 import { useState, useMemo } from 'react'
 import { useApp } from '@/context/AppContext'
-import { upsertIncome } from '@/lib/api'
+import { upsertIncome, deleteIncome } from '@/lib/api'
 import { MONTH_NAMES, computeShares } from '@/types'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+
+// Un mois est verrouillé si son dernier jour date de plus de 30 jours
+function isMonthLocked(year: number, month: number): boolean {
+  const lastDay = new Date(year, month, 0) // dernier jour du mois
+  const diffDays = (Date.now() - lastDay.getTime()) / (1000 * 60 * 60 * 24)
+  return diffDays > 30
+}
 
 export default function RevenusPage() {
   const { incomes, loading, refresh } = useApp()
@@ -17,6 +24,7 @@ export default function RevenusPage() {
   const [maneInput, setManeInput] = useState('')
   const [myriemInput, setMyriemInput] = useState('')
   const [saving, setSaving] = useState(false)
+  const [resetting, setResetting] = useState<number | null>(null)
 
   const years = useMemo(() => {
     const set = new Set<number>([currentYear])
@@ -44,6 +52,15 @@ export default function RevenusPage() {
     } finally { setSaving(false) }
   }
 
+  const handleReset = async (month: number) => {
+    if (!confirm(`Remettre les revenus de ${MONTH_NAMES[month - 1]} aux valeurs par défaut (62% / 38%) ?`)) return
+    setResetting(month)
+    try {
+      await deleteIncome(selectedYear, month)
+      await refresh()
+    } finally { setResetting(null) }
+  }
+
   const chartData = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => {
       const m = i + 1
@@ -64,7 +81,12 @@ export default function RevenusPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-[var(--brown-900)]">Revenus</h1>
+        <div>
+          <h1 className="text-xl font-bold text-[var(--brown-900)]">Revenus</h1>
+          <p className="text-xs text-[var(--brown-400)] mt-0.5">
+            Les revenus d'un mois sont verrouillés après 30 jours
+          </p>
+        </div>
         <div className="flex gap-2">
           {years.map(y => (
             <button key={y} onClick={() => setSelectedYear(y)}
@@ -110,7 +132,7 @@ export default function RevenusPage() {
               <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--red-500)' }}>Myriem</th>
               <th className="text-right px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Total</th>
               <th className="text-right px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Parts</th>
-              <th className="px-5 py-3" />
+              <th className="px-5 py-3 w-36" />
             </tr>
           </thead>
           <tbody>
@@ -118,26 +140,30 @@ export default function RevenusPage() {
               const income = yearIncomes.find(i => i.month === month)
               const shares = computeShares(income ?? null)
               const isEditing = editingMonth === month
+              const locked = isMonthLocked(selectedYear, month)
               const total = income ? income.mane_income + income.myriem_income : null
 
               return (
                 <tr key={month} className="border-b border-[var(--brown-100)] last:border-0"
-                  style={{ background: isEditing ? 'var(--olive-50)' : 'white' }}>
-                  <td className="px-5 py-3 text-sm font-medium text-[var(--brown-900)]">{MONTH_NAMES[month - 1]}</td>
+                  style={{ background: isEditing ? 'var(--olive-50)' : locked ? 'var(--brown-50)' : 'white' }}>
+                  <td className="px-5 py-3 text-sm font-medium text-[var(--brown-900)]">
+                    <span>{MONTH_NAMES[month - 1]}</span>
+                    {locked && <span className="ml-2 text-xs text-[var(--brown-300)]">🔒</span>}
+                  </td>
                   <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--olive-600)' }}>
                     {isEditing ? (
                       <Input type="number" value={maneInput} onChange={e => setManeInput(e.target.value)}
-                        className="w-24 text-right border-[var(--olive-200)]" placeholder="0" />
-                    ) : income ? `${income.mane_income.toFixed(0)} €` : '—'}
+                        className="w-24 ml-auto text-right border-[var(--olive-200)]" placeholder="0" />
+                    ) : income ? `${income.mane_income.toFixed(0)} €` : <span className="text-[var(--brown-300)]">—</span>}
                   </td>
                   <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--red-500)' }}>
                     {isEditing ? (
                       <Input type="number" value={myriemInput} onChange={e => setMyriemInput(e.target.value)}
-                        className="w-24 text-right border-[var(--red-200)]" placeholder="0" />
-                    ) : income ? `${income.myriem_income.toFixed(0)} €` : '—'}
+                        className="w-24 ml-auto text-right border-[var(--red-200)]" placeholder="0" />
+                    ) : income ? `${income.myriem_income.toFixed(0)} €` : <span className="text-[var(--brown-300)]">—</span>}
                   </td>
                   <td className="px-5 py-3 text-right text-sm font-medium text-[var(--brown-900)]">
-                    {total !== null ? `${total.toFixed(0)} €` : '—'}
+                    {total !== null ? `${total.toFixed(0)} €` : <span className="text-[var(--brown-300)]">—</span>}
                   </td>
                   <td className="px-5 py-3 text-right text-xs">
                     {income ? (
@@ -148,16 +174,33 @@ export default function RevenusPage() {
                       </span>
                     ) : <span className="text-[var(--brown-300)]">62% / 38%</span>}
                   </td>
-                  <td className="px-5 py-3 text-right">
-                    {isEditing ? (
+                  <td className="px-5 py-3">
+                    {locked ? (
+                      <span className="text-xs text-[var(--brown-300)] block text-right">Verrouillé</span>
+                    ) : isEditing ? (
                       <div className="flex gap-2 justify-end">
                         <Button variant="ghost" size="sm" onClick={() => setEditingMonth(null)} className="text-[var(--brown-400)]">✕</Button>
-                        <Button size="sm" onClick={handleSave} disabled={saving} className="bg-[var(--olive-600)] hover:bg-[var(--olive-700)] text-white">
+                        <Button size="sm" onClick={handleSave} disabled={saving}
+                          className="bg-[var(--olive-600)] hover:bg-[var(--olive-700)] text-white">
                           {saving ? '...' : 'OK'}
                         </Button>
                       </div>
                     ) : (
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(month)} className="text-[var(--brown-400)] hover:text-[var(--brown-700)]">✎</Button>
+                      <div className="flex gap-1 justify-end">
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(month)}
+                          className="text-[var(--brown-400)] hover:text-[var(--brown-700)]" title="Modifier">
+                          ✎
+                        </Button>
+                        {income && (
+                          <Button variant="ghost" size="sm"
+                            onClick={() => handleReset(month)}
+                            disabled={resetting === month}
+                            className="text-[var(--brown-300)] hover:text-[var(--red-400)]"
+                            title="Remettre aux valeurs par défaut">
+                            ↺
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </td>
                 </tr>
