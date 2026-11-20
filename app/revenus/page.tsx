@@ -75,63 +75,66 @@ export default function RevenusPage() {
   }, [yearIncomes])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-40 text-sm text-[var(--brown-400)]">Chargement...</div>
+    return (
+      <div className="flex items-center justify-center h-40">
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)' }}>Chargement…</span>
+      </div>
+    )
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-[var(--brown-900)]">Revenus</h1>
-          <p className="text-xs text-[var(--brown-400)] mt-0.5">
-            Les revenus d'un mois sont verrouillés après 30 jours
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 400, color: 'var(--ink)' }}>Revenus</h1>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--ink-2)', marginTop: '4px' }}>
+            Verrouillé après 30 jours
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           {years.map(y => (
-            <button key={y} onClick={() => setSelectedYear(y)}
-              className="px-3 py-1.5 rounded-lg text-sm border transition-colors"
-              style={{
-                background: selectedYear === y ? 'var(--olive-50)' : 'white',
-                color: selectedYear === y ? 'var(--olive-600)' : 'var(--brown-500)',
-                borderColor: selectedYear === y ? 'var(--olive-200)' : 'var(--brown-200)',
-                fontWeight: selectedYear === y ? 600 : 400,
-              }}
+            <button
+              key={y}
+              onClick={() => setSelectedYear(y)}
+              className={selectedYear === y ? 'g-chip g-chip--active' : 'g-chip'}
+              aria-pressed={selectedYear === y}
             >{y}</button>
           ))}
         </div>
       </div>
 
       {chartData.length > 1 && (
-        <div className="rounded-2xl p-5 mb-6 bg-white border border-[var(--brown-200)] shadow-sm">
-          <h2 className="text-sm font-medium text-[var(--brown-500)] mb-4">Évolution des revenus {selectedYear}</h2>
+        <div className="p-5 mb-6" style={{ borderRadius: 'var(--radius-card)', background: 'rgba(255,255,255,.45)', border: '1px solid var(--line)' }}>
+          <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: '16px' }}>
+            Évolution {selectedYear}
+          </h2>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--brown-100)" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--brown-400)' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: 'var(--brown-400)' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}€`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(22,20,15,.08)" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#5e584d' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#5e584d' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}€`} />
               <Tooltip
-                contentStyle={{ background: '#fff', border: '1px solid var(--brown-200)', borderRadius: '8px', fontSize: '12px' }}
+                contentStyle={{ background: '#ece8e1', border: '1px solid rgba(22,20,15,.12)', borderRadius: '12px', fontSize: '12px' }}
                 formatter={(v) => [`${Number(v).toFixed(0)} €`]}
               />
               <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Line type="monotone" dataKey="mane" name="Mane" stroke="var(--olive-500)" strokeWidth={2} dot={{ r: 3 }} connectNulls />
-              <Line type="monotone" dataKey="myriem" name="Myriem" stroke="var(--red-400)" strokeWidth={2} dot={{ r: 3 }} connectNulls />
-              <Line type="monotone" dataKey="total" name="Total" stroke="var(--brown-300)" strokeWidth={1.5} strokeDasharray="4 4" dot={false} connectNulls />
+              <Line type="monotone" dataKey="mane" name="Mane" stroke="#ff5a1f" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+              <Line type="monotone" dataKey="myriem" name="Myriem" stroke="#2440d8" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+              <Line type="monotone" dataKey="total" name="Total" stroke="rgba(22,20,15,.35)" strokeWidth={1.5} strokeDasharray="4 4" dot={false} connectNulls />
             </LineChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      <div className="rounded-2xl overflow-hidden border border-[var(--brown-200)] bg-white shadow-sm">
+      <div className="overflow-hidden" style={{ borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', background: 'rgba(255,255,255,.45)' }}>
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[var(--brown-100)] bg-[var(--brown-50)]">
-              <th className="text-left px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Mois</th>
-              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--olive-600)' }}>Mane</th>
-              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--red-500)' }}>Myriem</th>
-              <th className="text-right px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Total</th>
-              <th className="text-right px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Parts</th>
+            <tr style={{ borderBottom: '1px solid var(--line)', background: 'rgba(22,20,15,.04)' }}>
+              <th className="text-left px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)', fontWeight: 400 }}>Mois</th>
+              <th className="text-right px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--orange)', fontWeight: 400 }}>Mane</th>
+              <th className="text-right px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--blue)', fontWeight: 400 }}>Myriem</th>
+              <th className="text-right px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)', fontWeight: 400 }}>Total</th>
+              <th className="text-right px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)', fontWeight: 400 }}>Parts</th>
               <th className="px-5 py-3 w-36" />
             </tr>
           </thead>
@@ -144,58 +147,60 @@ export default function RevenusPage() {
               const total = income ? income.mane_income + income.myriem_income : null
 
               return (
-                <tr key={month} className="border-b border-[var(--brown-100)] last:border-0"
-                  style={{ background: isEditing ? 'var(--olive-50)' : locked ? 'var(--brown-50)' : 'white' }}>
-                  <td className="px-5 py-3 text-sm font-medium text-[var(--brown-900)]">
+                <tr key={month} style={{
+                  borderBottom: '1px solid var(--line)',
+                  background: isEditing ? 'rgba(255,90,31,.05)' : locked ? 'rgba(22,20,15,.03)' : 'transparent',
+                }}>
+                  <td className="px-5 py-3 text-sm" style={{ color: 'var(--ink)', fontWeight: 500 }}>
                     <span>{MONTH_NAMES[month - 1]}</span>
-                    {locked && <span className="ml-2 text-xs text-[var(--brown-300)]">🔒</span>}
+                    {locked && <span className="ml-2 text-xs" style={{ color: 'var(--ink-2)', opacity: .5 }}>🔒</span>}
                   </td>
-                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--olive-600)' }}>
+                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--orange)', fontVariantNumeric: 'tabular-nums' }}>
                     {isEditing ? (
                       <Input type="number" value={maneInput} onChange={e => setManeInput(e.target.value)}
-                        className="w-24 ml-auto text-right border-[var(--olive-200)]" placeholder="0" />
-                    ) : income ? `${income.mane_income.toFixed(0)} €` : <span className="text-[var(--brown-300)]">—</span>}
+                        className="w-24 ml-auto text-right" placeholder="0" />
+                    ) : income ? `${income.mane_income.toFixed(0)} €` : <span style={{ color: 'var(--ink-2)', opacity: .4 }}>—</span>}
                   </td>
-                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--red-500)' }}>
+                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--blue)', fontVariantNumeric: 'tabular-nums' }}>
                     {isEditing ? (
                       <Input type="number" value={myriemInput} onChange={e => setMyriemInput(e.target.value)}
-                        className="w-24 ml-auto text-right border-[var(--red-200)]" placeholder="0" />
-                    ) : income ? `${income.myriem_income.toFixed(0)} €` : <span className="text-[var(--brown-300)]">—</span>}
+                        className="w-24 ml-auto text-right" placeholder="0" />
+                    ) : income ? `${income.myriem_income.toFixed(0)} €` : <span style={{ color: 'var(--ink-2)', opacity: .4 }}>—</span>}
                   </td>
-                  <td className="px-5 py-3 text-right text-sm font-medium text-[var(--brown-900)]">
-                    {total !== null ? `${total.toFixed(0)} €` : <span className="text-[var(--brown-300)]">—</span>}
+                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--ink)', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+                    {total !== null ? `${total.toFixed(0)} €` : <span style={{ color: 'var(--ink-2)', opacity: .4 }}>—</span>}
                   </td>
                   <td className="px-5 py-3 text-right text-xs">
                     {income ? (
                       <span>
-                        <span style={{ color: 'var(--olive-600)' }}>{(shares.mane * 100).toFixed(0)}%</span>
-                        <span className="text-[var(--brown-300)]"> / </span>
-                        <span style={{ color: 'var(--red-500)' }}>{(shares.myriem * 100).toFixed(0)}%</span>
+                        <span style={{ color: 'var(--orange)' }}>{(shares.mane * 100).toFixed(0)}%</span>
+                        <span style={{ color: 'var(--ink-2)', opacity: .4 }}> / </span>
+                        <span style={{ color: 'var(--blue)' }}>{(shares.myriem * 100).toFixed(0)}%</span>
                       </span>
-                    ) : <span className="text-[var(--brown-300)]">62% / 38%</span>}
+                    ) : <span style={{ color: 'var(--ink-2)', opacity: .4 }}>62% / 38%</span>}
                   </td>
                   <td className="px-5 py-3">
                     {locked ? (
-                      <span className="text-xs text-[var(--brown-300)] block text-right">Verrouillé</span>
+                      <span className="text-xs block text-right" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--ink-2)', opacity: .5 }}>Verrouillé</span>
                     ) : isEditing ? (
                       <div className="flex gap-2 justify-end">
-                        <Button variant="ghost" size="sm" onClick={() => setEditingMonth(null)} className="text-[var(--brown-400)]">✕</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setEditingMonth(null)} style={{ color: 'var(--ink-2)' }}>✕</Button>
                         <Button size="sm" onClick={handleSave} disabled={saving}
-                          className="bg-[var(--olive-600)] hover:bg-[var(--olive-700)] text-white">
-                          {saving ? '...' : 'OK'}
+                          style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
+                          {saving ? '…' : 'OK'}
                         </Button>
                       </div>
                     ) : (
                       <div className="flex gap-1 justify-end">
                         <Button variant="ghost" size="sm" onClick={() => openEdit(month)}
-                          className="text-[var(--brown-400)] hover:text-[var(--brown-700)]" title="Modifier">
+                          style={{ color: 'var(--ink-2)' }} title="Modifier">
                           ✎
                         </Button>
                         {income && (
                           <Button variant="ghost" size="sm"
                             onClick={() => handleReset(month)}
                             disabled={resetting === month}
-                            className="text-[var(--brown-300)] hover:text-[var(--red-400)]"
+                            style={{ color: 'var(--ink-2)', opacity: .5 }}
                             title="Remettre aux valeurs par défaut">
                             ↺
                           </Button>

@@ -24,7 +24,7 @@ export default function BilanPage() {
 
   const months = Array.from({ length: selectedYear === currentYear ? currentMonth : 12 }, (_, i) => i + 1).reverse()
 
-  const PERSON_COLOR: Record<string, string> = { mane: 'var(--olive-600)', myriem: 'var(--red-500)' }
+  const PERSON_COLOR: Record<string, string> = { mane: 'var(--orange)', myriem: 'var(--blue)' }
 
   const handleToggleSettle = async (year: number, month: number) => {
     const key = `${year}-${month}`
@@ -52,45 +52,46 @@ export default function BilanPage() {
   }, [expenses, incomes, settlements, months, selectedYear])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-40 text-sm text-[var(--brown-400)]">Chargement...</div>
+    return (
+      <div className="flex items-center justify-center h-40">
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)' }}>Chargement…</span>
+      </div>
+    )
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-[var(--brown-900)]">Bilan</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 400, color: 'var(--ink)' }}>Bilan</h1>
           {pendingTotal > 0.01 && (
-            <p className="text-sm mt-1 text-[var(--brown-500)]">
-              En attente : <span className="font-semibold text-[var(--red-500)]">{pendingTotal.toFixed(2)} €</span>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--ink-2)', marginTop: '4px' }}>
+              En attente : <span style={{ color: 'var(--alert)', fontWeight: 600 }}>{pendingTotal.toFixed(2)} €</span>
             </p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           {years.map(y => (
-            <button key={y} onClick={() => setSelectedYear(y)}
-              className="px-3 py-1.5 rounded-lg text-sm border transition-colors"
-              style={{
-                background: selectedYear === y ? 'var(--olive-50)' : 'white',
-                color: selectedYear === y ? 'var(--olive-600)' : 'var(--brown-500)',
-                borderColor: selectedYear === y ? 'var(--olive-200)' : 'var(--brown-200)',
-                fontWeight: selectedYear === y ? 600 : 400,
-              }}
+            <button
+              key={y}
+              onClick={() => setSelectedYear(y)}
+              className={selectedYear === y ? 'g-chip g-chip--active' : 'g-chip'}
+              aria-pressed={selectedYear === y}
             >{y}</button>
           ))}
         </div>
       </div>
 
-      <div className="rounded-2xl overflow-hidden border border-[var(--brown-200)] bg-white shadow-sm mb-6">
+      <div className="overflow-hidden mb-6" style={{ borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', background: 'rgba(255,255,255,.45)' }}>
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[var(--brown-100)] bg-[var(--brown-50)]">
-              <th className="text-left px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Mois</th>
-              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--olive-600)' }}>Mane avancé</th>
-              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--red-500)' }}>Myriem avancé</th>
-              <th className="text-right px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Total</th>
-              <th className="text-center px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Remboursement dû</th>
-              <th className="text-center px-5 py-3 text-xs font-medium text-[var(--brown-500)]">Statut</th>
+            <tr style={{ borderBottom: '1px solid var(--line)', background: 'rgba(22,20,15,.04)' }}>
+              <th className="text-left px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)', fontWeight: 400 }}>Mois</th>
+              <th className="text-right px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--orange)', fontWeight: 400 }}>Mane avancé</th>
+              <th className="text-right px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--blue)', fontWeight: 400 }}>Myriem avancé</th>
+              <th className="text-right px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)', fontWeight: 400 }}>Total</th>
+              <th className="text-center px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)', fontWeight: 400 }}>Remboursement dû</th>
+              <th className="text-center px-5 py-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)', fontWeight: 400 }}>Statut</th>
             </tr>
           </thead>
           <tbody>
@@ -103,46 +104,54 @@ export default function BilanPage() {
               const isSettled = !!settlement
 
               return (
-                <tr key={month} className="border-b border-[var(--brown-100)] last:border-0"
-                  style={{ background: isSettled ? 'var(--brown-50)' : 'white', opacity: isSettled ? 0.75 : 1 }}>
-                  <td className="px-5 py-3 text-sm font-medium text-[var(--brown-900)]">{MONTH_NAMES[month - 1]}</td>
-                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--olive-600)' }}>
-                    {monthExpenses.length > 0 ? `${balance.mane_paid.toFixed(2)} €` : '—'}
+                <tr key={month} style={{
+                  borderBottom: '1px solid var(--line)',
+                  background: isSettled ? 'rgba(22,20,15,.03)' : 'transparent',
+                  opacity: isSettled ? 0.75 : 1,
+                }}>
+                  <td className="px-5 py-3 text-sm" style={{ color: 'var(--ink)', fontWeight: 500 }}>{MONTH_NAMES[month - 1]}</td>
+                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--orange)', fontVariantNumeric: 'tabular-nums' }}>
+                    {monthExpenses.length > 0 ? `${balance.mane_paid.toFixed(2)} €` : <span style={{ color: 'var(--ink-2)', opacity: .4 }}>—</span>}
                   </td>
-                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--red-500)' }}>
-                    {monthExpenses.length > 0 ? `${balance.myriem_paid.toFixed(2)} €` : '—'}
+                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--blue)', fontVariantNumeric: 'tabular-nums' }}>
+                    {monthExpenses.length > 0 ? `${balance.myriem_paid.toFixed(2)} €` : <span style={{ color: 'var(--ink-2)', opacity: .4 }}>—</span>}
                   </td>
-                  <td className="px-5 py-3 text-right text-sm font-medium text-[var(--brown-900)]">
-                    {monthExpenses.length > 0 ? `${balance.total.toFixed(2)} €` : '—'}
+                  <td className="px-5 py-3 text-right text-sm" style={{ color: 'var(--ink)', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+                    {monthExpenses.length > 0 ? `${balance.total.toFixed(2)} €` : <span style={{ color: 'var(--ink-2)', opacity: .4 }}>—</span>}
                   </td>
                   <td className="px-5 py-3 text-center text-sm">
                     {balance.debtor && balance.creditor ? (
                       <span>
                         <span style={{ color: PERSON_COLOR[balance.debtor] }}>{balance.debtor === 'mane' ? 'Mane' : 'Myriem'}</span>
-                        {' → '}
+                        <span style={{ color: 'var(--ink-2)' }}>{' → '}</span>
                         <span style={{ color: PERSON_COLOR[balance.creditor] }}>{balance.creditor === 'mane' ? 'Mane' : 'Myriem'}</span>
-                        <span className="font-semibold text-[var(--brown-900)] ml-2">{balance.debt_amount.toFixed(2)} €</span>
+                        <span style={{ color: 'var(--ink)', fontWeight: 600, marginLeft: '8px', fontVariantNumeric: 'tabular-nums' }}>{balance.debt_amount.toFixed(2)} €</span>
                       </span>
                     ) : monthExpenses.length > 0 ? (
-                      <span className="text-[var(--olive-600)]">Égalité</span>
-                    ) : '—'}
+                      <span style={{ color: 'var(--orange)', fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '.04em', textTransform: 'uppercase' }}>Égalité</span>
+                    ) : <span style={{ color: 'var(--ink-2)', opacity: .4 }}>—</span>}
                   </td>
                   <td className="px-5 py-3 text-center">
                     {monthExpenses.length > 0 && balance.debtor ? (
-                      <Button
-                        variant="outline" size="sm"
+                      <button
                         onClick={() => handleToggleSettle(selectedYear, month)}
                         disabled={settling === key}
-                        className="text-xs rounded-full"
                         style={{
-                          borderColor: isSettled ? 'var(--olive-200)' : 'var(--brown-200)',
-                          color: isSettled ? 'var(--olive-600)' : 'var(--brown-500)',
-                          background: isSettled ? 'var(--olive-50)' : 'white',
+                          borderRadius: 'var(--radius-pill)',
+                          border: '1px solid var(--line)',
+                          background: isSettled ? 'rgba(22,20,15,.08)' : 'transparent',
+                          color: isSettled ? 'var(--ink)' : 'var(--ink-2)',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '10px',
+                          letterSpacing: '.06em',
+                          textTransform: 'uppercase',
+                          padding: '5px 11px',
+                          cursor: 'pointer',
                         }}
                       >
-                        {settling === key ? '...' : isSettled ? '✓ Soldé' : 'En attente'}
-                      </Button>
-                    ) : <span className="text-[var(--brown-300)] text-xs">—</span>}
+                        {settling === key ? '…' : isSettled ? '✓ Soldé' : 'En attente'}
+                      </button>
+                    ) : <span style={{ color: 'var(--ink-2)', opacity: .4, fontSize: '12px' }}>—</span>}
                   </td>
                 </tr>
               )
@@ -151,19 +160,19 @@ export default function BilanPage() {
         </table>
       </div>
 
-      {/* Graphique par catégorie */}
       {expenses.filter(e => e.year === selectedYear).length > 0 && (
-        <div className="rounded-2xl p-5 mb-6 bg-white border border-[var(--brown-200)] shadow-sm">
+        <div className="p-5 mb-6" style={{ borderRadius: 'var(--radius-card)', background: 'rgba(255,255,255,.45)', border: '1px solid var(--line)' }}>
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <h2 className="text-sm font-semibold text-[var(--brown-900)]">Dépenses par catégorie</h2>
+            <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)' }}>
+              Dépenses par catégorie
+            </h2>
 
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Dropdown mois */}
               <select
                 value={chartMonth}
                 onChange={e => setChartMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                className="h-8 rounded-lg border border-[var(--brown-200)] bg-white text-[var(--brown-700)] px-2.5 pr-8 text-xs outline-none appearance-none"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ac8b7c' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+                className="g-select"
+                style={{ padding: '5px 32px 5px 10px', fontSize: '12px' }}
               >
                 <option value="all">Tous les mois</option>
                 {months.map(m => (
@@ -171,22 +180,18 @@ export default function BilanPage() {
                 ))}
               </select>
 
-              {/* Segmented control personne */}
-              <div className="flex rounded-lg border border-[var(--brown-200)] overflow-hidden">
+              <div className="g-seg">
                 {(['all', 'mane', 'myriem'] as const).map(p => (
                   <button
                     key={p}
                     onClick={() => setChartPerson(p)}
-                    className="text-xs px-3 py-1.5 transition-colors"
+                    aria-pressed={chartPerson === p}
                     style={{
-                      background: chartPerson === p
-                        ? p === 'mane' ? 'var(--olive-100)' : p === 'myriem' ? 'var(--red-50)' : 'var(--brown-100)'
-                        : 'white',
-                      color: chartPerson === p
-                        ? p === 'mane' ? 'var(--olive-700)' : p === 'myriem' ? 'var(--red-600)' : 'var(--brown-800)'
-                        : 'var(--brown-400)',
-                      fontWeight: chartPerson === p ? 600 : 400,
-                      borderRight: p !== 'myriem' ? '1px solid var(--brown-200)' : 'none',
+                      color: chartPerson !== p
+                        ? p === 'mane' ? 'var(--orange)' : p === 'myriem' ? 'var(--blue)' : 'var(--ink-2)'
+                        : undefined,
+                      fontSize: '12px',
+                      padding: '5px 12px',
                     }}
                   >
                     {p === 'all' ? 'Toutes' : p === 'mane' ? 'Mane' : 'Myriem'}
@@ -207,7 +212,6 @@ export default function BilanPage() {
         </div>
       )}
 
-      {/* Récap annuel */}
       <div className="grid grid-cols-2 gap-4">
         {(['mane', 'myriem'] as const).map(person => {
           const totalPaid = expenses.filter(e => e.year === selectedYear && e.paid_by === person).reduce((s, e) => s + e.amount, 0)
@@ -218,28 +222,27 @@ export default function BilanPage() {
             return sum + (person === 'mane' ? balance.mane_due : balance.myriem_due)
           }, 0)
           const diff = totalPaid - totalDue
+          const accent = person === 'mane' ? 'var(--orange)' : 'var(--blue)'
+          const accentBg = person === 'mane' ? 'rgba(255,90,31,.07)' : 'rgba(36,64,216,.07)'
+          const accentLine = person === 'mane' ? 'rgba(255,90,31,.2)' : 'rgba(36,64,216,.18)'
 
           return (
-            <div key={person} className="rounded-2xl p-5 border shadow-sm"
-              style={{
-                background: person === 'mane' ? 'var(--olive-50)' : 'var(--red-50)',
-                borderColor: person === 'mane' ? 'var(--olive-200)' : 'var(--red-200)',
-              }}>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: PERSON_COLOR[person] }}>
+            <div key={person} className="p-5" style={{ borderRadius: 'var(--radius-card)', background: accentBg, border: `1px solid ${accentLine}` }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 400, color: accent, marginBottom: '14px' }}>
                 {person === 'mane' ? 'Mane' : 'Myriem'} — {selectedYear}
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-[var(--brown-500)]">Total avancé</span>
-                  <span className="font-medium text-[var(--brown-900)]">{totalPaid.toFixed(2)} €</span>
+                  <span style={{ color: 'var(--ink-2)' }}>Total avancé</span>
+                  <span style={{ color: 'var(--ink)', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{totalPaid.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[var(--brown-500)]">Total dû (parts)</span>
-                  <span className="font-medium text-[var(--brown-900)]">{totalDue.toFixed(2)} €</span>
+                  <span style={{ color: 'var(--ink-2)' }}>Total dû (parts)</span>
+                  <span style={{ color: 'var(--ink)', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{totalDue.toFixed(2)} €</span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[var(--brown-200)]">
-                  <span className="text-[var(--brown-500)]">Balance</span>
-                  <span className="font-bold" style={{ color: diff >= 0 ? 'var(--olive-600)' : 'var(--red-500)' }}>
+                <div className="flex justify-between pt-2" style={{ borderTop: `1px solid ${accentLine}` }}>
+                  <span style={{ color: 'var(--ink-2)' }}>Balance</span>
+                  <span style={{ color: diff >= 0 ? 'var(--orange)' : 'var(--blue)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                     {diff >= 0 ? '+' : ''}{diff.toFixed(2)} €
                   </span>
                 </div>

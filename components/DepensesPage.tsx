@@ -10,28 +10,25 @@ export function DepensesPage() {
   const currentMonth = new Date().getMonth() + 1
   const [selectedYear, setSelectedYear] = useState(currentYear)
 
-  // Années disponibles (celles qui ont des dépenses + l'année courante)
   const years = useMemo(() => {
     const set = new Set<number>([currentYear])
     expenses.forEach(e => set.add(e.year))
     return Array.from(set).sort((a, b) => b - a)
   }, [expenses, currentYear])
 
-  // Mois à afficher : tous les mois de l'année sélectionnée de décembre à janvier
-  // + le mois courant en premier si c'est l'année courante
   const months = useMemo(() => {
     const result: number[] = []
     const maxMonth = selectedYear === currentYear ? currentMonth : 12
-    for (let m = maxMonth; m >= 1; m--) {
-      result.push(m)
-    }
+    for (let m = maxMonth; m >= 1; m--) result.push(m)
     return result
   }, [selectedYear, currentYear, currentMonth])
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
-        <div className="text-sm" style={{ color: 'var(--muted)' }}>Chargement...</div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-2)' }}>
+          Chargement…
+        </span>
       </div>
     )
   }
@@ -39,18 +36,16 @@ export function DepensesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold">Dépenses</h1>
-        <div className="flex gap-2">
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 400, color: 'var(--ink)' }}>
+          Dépenses
+        </h1>
+        <div className="flex gap-1.5">
           {years.map(y => (
             <button
               key={y}
               onClick={() => setSelectedYear(y)}
-              className="px-3 py-1.5 rounded-lg text-sm transition-colors"
-              style={{
-                background: selectedYear === y ? 'var(--card-hover)' : 'transparent',
-                color: selectedYear === y ? 'var(--foreground)' : 'var(--muted)',
-                border: '1px solid var(--border)',
-              }}
+              className={selectedYear === y ? 'g-chip g-chip--active' : 'g-chip'}
+              aria-pressed={selectedYear === y}
             >
               {y}
             </button>
