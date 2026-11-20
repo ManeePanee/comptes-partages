@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useApp } from '@/context/AppContext'
 import { addExpense } from '@/lib/api'
 import { CATEGORIES, SPLIT_TYPES, type Category, type Person, type SplitType } from '@/types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { learnFromExpense, smartGuessCategory } from '@/lib/categoryRules'
 
 interface Props {
   year: number
@@ -14,7 +15,7 @@ interface Props {
   onClose: () => void
 }
 
-function guessCategory(description: string): Category {
+function hardcodedGuessCategory(description: string): Category {
   const d = description.toLowerCase()
   if (/loyer|électr|gaz|internet|eau|charges|assurance|maison|appartement|ikea|leroy/.test(d)) return 'Maison'
   if (/voyage|vacances|hôtel|hotel|airbnb|avion|train sncf|location|camping/.test(d)) return 'Vacances'
@@ -28,18 +29,13 @@ function guessCategory(description: string): Category {
   return 'Autre'
 }
 
-const PERSON_COLOR: Record<Person, string> = {
-  mane: 'var(--olive-600)',
-  myriem: 'var(--red-500)',
+function guessCategory(description: string): Category {
+  return smartGuessCategory(description) ?? hardcodedGuessCategory(description)
 }
-const PERSON_BG: Record<Person, string> = {
-  mane: 'var(--olive-50)',
-  myriem: 'var(--red-50)',
-}
-const PERSON_BORDER: Record<Person, string> = {
-  mane: 'var(--olive-200)',
-  myriem: 'var(--red-200)',
-}
+
+const PERSON_COLOR: Record<Person, string> = { mane: 'var(--olive-600)', myriem: 'var(--red-500)' }
+const PERSON_BG: Record<Person, string> = { mane: 'var(--olive-50)', myriem: 'var(--red-50)' }
+const PERSON_BORDER: Record<Person, string> = { mane: 'var(--olive-200)', myriem: 'var(--red-200)' }
 
 export function AddExpenseModal({ year, month, onClose }: Props) {
   const { profile, refresh } = useApp()
@@ -51,6 +47,8 @@ export function AddExpenseModal({ year, month, onClose }: Props) {
   const [labels, setLabels] = useState('')
   const [loading, setLoading] = useState(false)
   const [autoCategory, setAutoCategory] = useState(true)
+  const [lastAdded, setLastAdded] = useState<string | null>(null)
+  const descRef = useRef<HTMLInputElement>(null)
 
   const handleDescChange = (v: string) => {
     setDescription(v)
@@ -70,8 +68,15 @@ export function AddExpenseModal({ year, month, onClose }: Props) {
         split_type: splitType,
         labels: labels ? labels.split(',').map(l => l.trim()).filter(Boolean) : [],
       })
+      learnFromExpense(description, category)
       await refresh()
-      onClose()
+      setLastAdded(description)
+      setDescription('')
+      setAmount('')
+      setCategory('Autre')
+      setLabels('')
+      setAutoCategory(true)
+      setTimeout(() => descRef.current?.focus(), 50)
     } catch (e) {
       console.error(e)
     } finally {
@@ -86,11 +91,19 @@ export function AddExpenseModal({ year, month, onClose }: Props) {
           <DialogTitle className="text-[var(--brown-900)]">Nouvelle dépense</DialogTitle>
         </DialogHeader>
 
+        {lastAdded && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--olive-50)] border border-[var(--olive-200)]">
+            <span className="text-[var(--olive-600)] text-sm">✓</span>
+            <span className="flex-1 truncate text-sm text-[var(--olive-700)]">{lastAdded}</span>
+            <span className="text-xs text-[var(--olive-500)]">ajoutée</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Description */}
           <div>
             <label className="text-xs font-medium text-[var(--brown-500)] mb-1.5 block">Description</label>
             <Input
+              ref={descRef}
               value={description}
               onChange={e => handleDescChange(e.target.value)}
               placeholder="ex: Monoprix courses semaine"
@@ -99,7 +112,6 @@ export function AddExpenseModal({ year, month, onClose }: Props) {
             />
           </div>
 
-          {/* Montant + Catégorie */}
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="text-xs font-medium text-[var(--brown-500)] mb-1.5 block">Montant (€)</label>
@@ -135,7 +147,6 @@ export function AddExpenseModal({ year, month, onClose }: Props) {
             </div>
           </div>
 
-          {/* Payé par */}
           <div>
             <label className="text-xs font-medium text-[var(--brown-500)] mb-1.5 block">Payé par</label>
             <div className="flex gap-2">
@@ -155,7 +166,6 @@ export function AddExpenseModal({ year, month, onClose }: Props) {
             </div>
           </div>
 
-          {/* Type de partage */}
           <div>
             <label className="text-xs font-medium text-[var(--brown-500)] mb-1.5 block">Partage</label>
             <div className="flex flex-col gap-1.5">
@@ -183,7 +193,6 @@ export function AddExpenseModal({ year, month, onClose }: Props) {
             </div>
           </div>
 
-          {/* Labels */}
           <div>
             <label className="text-xs font-medium text-[var(--brown-500)] mb-1.5 block">
               Labels <span className="text-[var(--brown-300)]">(séparés par des virgules, optionnel)</span>
@@ -197,7 +206,7 @@ export function AddExpenseModal({ year, month, onClose }: Props) {
 
           <div className="flex gap-3 mt-1">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1 border-[var(--brown-200)] text-[var(--brown-500)]">
-              Annuler
+              Fermer
             </Button>
             <Button type="submit" disabled={loading} className="flex-1 bg-[var(--olive-600)] hover:bg-[var(--olive-700)] text-white">
               {loading ? 'Ajout...' : 'Ajouter'}
